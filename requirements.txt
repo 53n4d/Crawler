@@ -1,0 +1,7 @@
+aiohttp==3.8.3
+alive_progress==2.4.1
+art==6.1
+mitmproxy==9.0.1
+playwright==1.30.0
+Requests==2.31.0
+requests_toolbelt==0.9.1
