@@ -16,7 +16,6 @@ class DependencyManager:
     def __init__(self):
         self.ansi_colors = ANSIColors
         self.common_helpers = CommonHelpers(self.ansi_colors)
-        self.common_helpers.load_json_files("/home/xseverity/Desktop/dynex/app/common/metadata")
         self.common_helpers.load_json_files("/home/xseverity/Desktop/dynex/app/common/patterns")
         self.common_helpers.load_json_files("/home/xseverity/Desktop/dynex/app/common/constants")
         self.report_generator = ReportGenerator
