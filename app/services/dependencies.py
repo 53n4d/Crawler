@@ -1,14 +1,13 @@
 import os
 import asyncio
 
-from ..services.scan.config import ScanConfig
-from ..services.authentication.authentication import Authentication
-from ..services.crawler.crawler import Crawler
-from ..services.crawler.helpers import CrawlerHelpers
+from .scan.config import ScanConfig
+from .authentication.authentication import Authentication
+from .crawler.crawler import Crawler
+from .crawler.helpers import CrawlerHelpers
 from ..common.helpers import CommonHelpers
-from ..services.scan.helpers import ScanHelpers 
-from ..services.scan.report import ReportGenerator
-from ..services.authentication.helpers import AuthenticationHelpers
+from .scan.helpers import ScanHelpers 
+from .authentication.helpers import AuthenticationHelpers
 from ..common.ansi_colors import ANSIColors
 
 
@@ -18,9 +17,8 @@ class DependencyManager:
         self.common_helpers = CommonHelpers(self.ansi_colors)
         self.common_helpers.load_json_files("/home/xseverity/Desktop/dynex/app/common/patterns")
         self.common_helpers.load_json_files("/home/xseverity/Desktop/dynex/app/common/constants")
-        self.report_generator = ReportGenerator
         self.crawler_helpers = CrawlerHelpers
-        self.scan_helpers = ScanHelpers(self.common_helpers, self.ansi_colors, self.report_generator)
+        self.scan_helpers = ScanHelpers(self.common_helpers, self.ansi_colors)
         self.scan_config = ScanConfig(self.scan_helpers, self.ansi_colors)
 
     async def get_scan_config(self, args): 
