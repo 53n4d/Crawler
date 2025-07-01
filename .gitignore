@@ -24,4 +24,14 @@ wheels/
 *.egg
 
 # Playwright binaries
+**/playwright/driver/# Virtual environments
+dynex/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Playwright binaries
 **/playwright/driver/
