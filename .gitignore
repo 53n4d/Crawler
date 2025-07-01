@@ -1,0 +1,4 @@
+dynex/
+
+*.pyc
+__pycache__/
