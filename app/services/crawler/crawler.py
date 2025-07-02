@@ -29,8 +29,8 @@ class Crawler:
         self.base_url = config["base_url"]
         self.pages_to_visit = config["starting_point"]
         self.constants = self.common_helpers.get_json_data('constants.json')
-        self.user_param_names = self.constants["user_param_names"]
-        self.password_param_names = self.constants["password_param_names"]
+        self.user_param_names = self.constants.get("user_param_names", [])  # Safe access
+        self.password_param_names = self.constants.get("password_param_names", [])  # Safe access
         self.new_popup_page = None
 
         self.skip_extensions = (
@@ -206,30 +206,41 @@ class Crawler:
                             or "audio" in content_type
                             or "video" in content_type
                         ):
-                            binary_data = await response.body()
-                            base64_encoded_data = base64.b64encode(binary_data).decode("utf-8")
-                            response_info["body"] = base64_encoded_data
-                            logging.info(f"Retrieved binary response for {response.url}")
+                            # FIXED: Better error handling for binary content
+                            try:
+                                binary_data = await response.body()
+                                base64_encoded_data = base64.b64encode(binary_data).decode("utf-8")
+                                response_info["body"] = base64_encoded_data
+                                logging.info(f"Retrieved binary response for {response.url}")
+                            except Exception as binary_error:
+                                logging.warning(f"Could not get binary body for {response.url}: {binary_error}")
+                                response_info["body"] = f"Binary body unavailable: {type(binary_error).__name__}"
                         else:
                             try:
                                 response_info["body"] = await response.text()
                                 logging.info(f"Retrieved other text response for {response.url}")
                             except UnicodeDecodeError:
-                                binary_data = await response.body()
-                                response_info["body"] = base64.b64encode(binary_data).decode("utf-8")
-                                logging.info(f"Retrieved binary response for {response.url} after text decode failure")
+                                try:
+                                    binary_data = await response.body()
+                                    response_info["body"] = base64.b64encode(binary_data).decode("utf-8")
+                                    logging.info(f"Retrieved binary response for {response.url} after text decode failure")
+                                except Exception as fallback_error:
+                                    logging.warning(f"Could not get any body for {response.url}: {fallback_error}")
+                                    response_info["body"] = f"Body unavailable: {type(fallback_error).__name__}"
 
-                        f_pattern = re.compile(r"(/[\w/]*(?:bla\.txt|bla\.txt.jpg))")
-                        match_file = f_pattern.findall(response_info["body"])
-                        if match_file:
-                            for f_match in match_file:
-                                file_url = urljoin(self.base_url, f_match)
-                                if file_url not in self.pages_to_visit:
-                                    self.pages_to_visit.append(file_url)
-                                    logging.info(f"Found and added file URL: {file_url}")
+                        # Only search for patterns if we have a valid body string
+                        if isinstance(response_info.get("body"), str) and "unavailable" not in response_info["body"]:
+                            f_pattern = re.compile(r"(/[\w/]*(?:bla\.txt|bla\.txt.jpg))")
+                            match_file = f_pattern.findall(response_info["body"])
+                            if match_file:
+                                for f_match in match_file:
+                                    file_url = urljoin(self.base_url, f_match)
+                                    if file_url not in self.pages_to_visit:
+                                        self.pages_to_visit.append(file_url)
+                                        logging.info(f"Found and added file URL: {file_url}")
                     except Exception as e:
                         logging.error(f"Failed to retrieve response body for {response.url}: {e}")
-                        response_info["body"] = "Failed to retrieve response body"
+                        response_info["body"] = f"Failed to retrieve response body: {type(e).__name__}"
 
                 (
                     self.static_responses.append(json.dumps(response_info))
@@ -737,7 +748,7 @@ class Crawler:
                         await page.wait_for_load_state("networkidle")
                         await page.goto(el["currentUrl"], timeout=30000)
                         self.detected_elements, self.detected_input_elements = await self.crawler_helpers.detection_cl_elements(
-                            page, self.detected_elements, self.detected_input_elements,
+                            page, self.detected_elements, self.detected_input_elements
                         )
                         logging.info(f"sixth: {self.detected_elements}")
                     else:
